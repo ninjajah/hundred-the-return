@@ -1,0 +1,222 @@
+<template>
+  <div class="min-h-screen p-4">
+    <div class="max-w-4xl mx-auto">
+      <h1 class="text-4xl font-bold text-white text-center mb-8">
+        <span v-if="store.currentUser">Верни сотку, <span class="text-purple-300">{{ store.currentUser.name }}</span></span>
+        <span v-else>Верни сотку</span>
+      </h1>
+
+      <div v-if="store.currentUser" class="space-y-6">
+
+        <!-- Expenses and Summary Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Expenses Management -->
+          <div class="glass rounded-2xl p-6">
+            <h2 class="text-2xl font-semibold text-white mb-6">
+              Расходы
+            </h2>
+
+            <!-- Add Expense Form -->
+            <form @submit.prevent="addExpense" class="space-y-3 mb-6">
+              <!-- Amount and Submit Row -->
+              <div class="flex gap-3 items-stretch">
+                <div class="flex-1">
+                  <input
+                    v-model.number="newExpenseAmount"
+                    type="number"
+                    step="0.01"
+                    placeholder="Сумма (₽)"
+                    class="input-field w-full h-full"
+                    required
+                  />
+                </div>
+                <button type="submit" class="btn-primary input-field whitespace-nowrap px-4 py-2" :disabled="isAddingExpense">
+                  <span v-if="isAddingExpense">⏳ Добавление...</span>
+                  <span v-else>💰</span>
+                </button>
+              </div>
+              
+              <!-- Description Field -->
+              <textarea
+                v-model="newExpenseDescription"
+                placeholder="Описание расхода..."
+                rows="3"
+                class="input-field w-full resize-none"
+                required
+              ></textarea>
+            </form>
+
+            <!-- Expenses List -->
+            <div v-if="store.expenses.length === 0" class="text-gray-300 text-center py-8 border border-gray-600 rounded-lg">
+              Пока нет расходов. Добавьте первый расход выше.
+            </div>
+            <div v-else class="space-y-3">
+              <div
+                v-for="expense in store.expenses"
+                :key="expense.id"
+                class="message-bubble flex justify-between items-center"
+              >
+                <div class="flex-1 min-w-0">
+                  <div class="text-white font-medium truncate">{{ expense.description }}</div>
+                  <div class="text-gray-300 text-sm">
+                    {{ expense.amount.toFixed(2) }} ₽ • {{ expense.participant_name }}
+                  </div>
+                </div>
+                <button
+                  v-if="expense.participant_name === store.currentUser?.name"
+                  @click="deleteExpense(expense.id)"
+                  class="btn-secondary ml-4 px-3 py-1 text-sm flex-shrink-0"
+                  :disabled="isDeletingExpense"
+                >
+                  <span v-if="isDeletingExpense">Удаление...</span>
+                  <span v-else>Удалить</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Summary -->
+          <div class="glass rounded-2xl p-6">
+            <h2 class="text-2xl font-semibold text-white mb-4">
+              Итого
+            </h2>
+            <!-- Debug info -->
+            <div v-if="store.expenses.length > 0" class="text-xs text-gray-400 mb-4">
+              Всего участников: {{ store.participants.length }} • Всего расходов: {{ store.expenses.reduce((sum, e) => sum + e.amount, 0).toFixed(2) }} ₽
+            </div>
+            <div v-if="store.expenseSummary.length === 0" class="text-gray-300 text-center py-8 border border-gray-600 rounded-lg">
+              Загрузка сводки...
+            </div>
+            <div v-else class="space-y-4">
+              <!-- Balances -->
+              <div class="space-y-3">
+                <div
+                  v-for="summary in store.expenseSummary"
+                  :key="summary.participant_name"
+                  class="message-bubble"
+                >
+                  <div class="text-white font-medium mb-2">{{ summary.participant_name }}</div>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                    <div class="text-gray-300">
+                      Потратил: <span class="text-white">{{ summary.total_spent.toFixed(2) }} ₽</span>
+                    </div>
+                    <div class="text-gray-300">
+                      Баланс: 
+                      <span :class="{
+                        'text-green-400': summary.balance > 0,
+                        'text-red-400': summary.balance < 0,
+                        'text-white': summary.balance === 0
+                      }">
+                        {{ summary.balance.toFixed(2) }} ₽
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Settlements -->
+              <div v-if="settlements.length > 0" class="border-t border-gray-600 pt-4">
+                <h3 class="text-lg font-semibold text-white mb-3 flex items-center">
+                  💸 Взаиморасчеты
+                </h3>
+                <div class="space-y-2">
+                  <div
+                    v-for="settlement in settlements"
+                    :key="`${settlement.from}-${settlement.to}`"
+                    class="message-bubble bg-gradient-to-r from-purple-500/10 to-blue-500/10 border border-purple-500/20"
+                  >
+                    <div class="flex items-center justify-between text-sm">
+                      <div class="flex items-center space-x-2">
+                        <span class="text-white font-medium">{{ settlement.from }}</span>
+                        <span class="text-gray-400">→</span>
+                        <span class="text-white font-medium">{{ settlement.to }}</span>
+                      </div>
+                      <div class="text-green-400 font-semibold">
+                        {{ settlement.amount.toFixed(2) }} ₽
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div v-else class="glass rounded-2xl p-8 text-center">
+        <p class="text-xl text-white">
+          Пожалуйста, сначала присоединитесь к группе расходов.
+        </p>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useExpenseStore } from '../stores/expenseStore'
+
+const route = useRoute()
+const router = useRouter()
+const store = useExpenseStore()
+
+const newExpenseDescription = ref('')
+const newExpenseAmount = ref(0)
+
+const isAddingExpense = ref(false)
+
+// Computed property for settlements
+const settlements = computed(() => {
+  if (store.expenseSummary.length === 0) return []
+  return store.calculateSettlements(store.expenseSummary)
+})
+
+async function addExpense() {
+  if (newExpenseDescription.value && newExpenseAmount.value > 0 && !isAddingExpense.value) {
+    isAddingExpense.value = true
+    try {
+      const success = await store.addExpense(newExpenseDescription.value, newExpenseAmount.value)
+      if (success) {
+        newExpenseDescription.value = ''
+        newExpenseAmount.value = 0
+      } else {
+        alert('Не удалось добавить расход')
+      }
+    } finally {
+      isAddingExpense.value = false
+    }
+  }
+}
+
+const isDeletingExpense = ref(false)
+
+async function deleteExpense(expenseId: string) {
+  if (isDeletingExpense.value) return
+
+  isDeletingExpense.value = true
+  try {
+    const success = await store.deleteExpense(expenseId)
+    if (!success) {
+      alert('Не удалось удалить расход')
+    }
+  } finally {
+    isDeletingExpense.value = false
+  }
+}
+
+onMounted(async () => {
+  const groupId = route.params.id as string
+
+  // Try to restore session first
+  const sessionRestored = await store.restoreSession()
+
+  // Check if user is in the correct group
+  if (!sessionRestored || !store.currentUser || store.currentExpenseGroupId !== groupId) {
+    // Redirect to join page
+    router.push(`/join/${groupId}`)
+    return
+  }
+})
+</script>
+
