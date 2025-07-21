@@ -60,7 +60,7 @@
               Расходы
             </h2>
             <div v-if="store.expenses.length === 0" class="text-gray-300 text-center py-8 border border-gray-600 rounded-lg">
-              Пока нет расходов. Добавьте первый расход выше.
+              Пока нет расходов
             </div>
             <div v-else class="space-y-3">
               <div
@@ -101,7 +101,7 @@
             </div>
             <div v-else class="space-y-4">
               <!-- Balances -->
-              <div class="space-y-3">
+              <div v-if="store.expenseSummary.some(s => s.total_spent > 0)" class="space-y-3">
                 <div
                   v-for="summary in store.expenseSummary"
                   :key="summary.participant_name"
@@ -124,6 +124,9 @@
                     </div>
                   </div>
                 </div>
+              </div>
+              <div v-else class="text-gray-300 text-center py-8 border border-gray-600 rounded-lg">
+                Пока нет расчетов
               </div>
               
               <!-- Settlements -->

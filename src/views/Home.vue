@@ -31,19 +31,22 @@
 
             <div class="space-y-4">
                 <div v-if="!groupLink" class="space-y-4">
-                    <input
-                        v-model="groupTitle"
-                        placeholder="Название группы (например: 'Поездка в Сочи')"
-                        class="input-field w-full"
-                    />
-                    <button
-                        @click="createNewExpenseGroup"
-                        :disabled="isCreating || !groupTitle.trim()"
-                        class="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <span v-if="isCreating">Создание...</span>
-                        <span v-else>Создать группу расходов</span>
-                    </button>
+                    <form @submit.prevent="createNewExpenseGroup" class="space-y-4">
+                        <input
+                            v-model="groupTitle"
+                            placeholder="Название группы (например: 'Поездка в Сочи')"
+                            class="input-field w-full"
+                            required
+                        />
+                        <button
+                            type="submit"
+                            :disabled="isCreating || !groupTitle.trim()"
+                            class="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <span v-if="isCreating">Создание...</span>
+                            <span v-else>Создать группу расходов</span>
+                        </button>
+                    </form>
                 </div>
 
                 <div
@@ -51,6 +54,26 @@
                     class="glass rounded-lg p-4 animate-slide-up space-y-4"
                 >
                     <div>
+                        <form @submit.prevent="joinExpenseGroup" class="space-y-3">
+                            <input
+                                v-model="userName"
+                                placeholder="Ваше имя"
+                                class="input-field w-full"
+                                required
+                            />
+                            <button
+                                type="submit"
+                                :disabled="isJoining || !userName.trim()"
+                                class="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <span v-if="isJoining">⏳ Присоединение...</span>
+                                <span v-else>💰 Присоединиться</span>
+                            </button>
+                        </form>
+                        <p v-if="joinError" class="text-red-400 text-sm mt-2">{{ joinError }}</p>
+                    </div>
+                    
+                    <div class="border-t border-gray-600 pt-4">
                         <p class="text-sm text-gray-300 mb-2">Ссылка для присоединения:</p>
                         <div
                             class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2"
@@ -75,26 +98,6 @@
                         <p class="text-xs text-gray-400 mt-2">
                             Поделитесь этой ссылкой с участниками группы
                         </p>
-                    </div>
-                    
-                    <div class="border-t border-gray-600 pt-4">
-                        <form @submit.prevent="joinExpenseGroup" class="space-y-3">
-                            <input
-                                v-model="userName"
-                                placeholder="Ваше имя"
-                                class="input-field w-full"
-                                required
-                            />
-                            <button
-                                type="submit"
-                                :disabled="isJoining || !userName.trim()"
-                                class="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <span v-if="isJoining">⏳ Присоединение...</span>
-                                <span v-else>💰 Присоединиться</span>
-                            </button>
-                        </form>
-                        <p v-if="joinError" class="text-red-400 text-sm mt-2">{{ joinError }}</p>
                     </div>
                 </div>
             </div>
