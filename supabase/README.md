@@ -14,21 +14,22 @@
 
 1. In your Supabase dashboard, go to **Settings** → **API**
 2. Copy the following values:
-   - **Project URL** (looks like: `https://your-project-id.supabase.co`)
-   - **Project API Key (anon, public)** (starts with `eyJ...`)
+    - **Project URL** (looks like: `https://your-project-id.supabase.co`)
+    - **Project API Key (anon, public)** (starts with `eyJ...`)
 
 ## 3. Configure Environment Variables
 
 1. Copy `.env.example` to `.env`:
-   ```bash
-   cp .env.example .env
-   ```
+
+    ```bash
+    cp .env.example .env
+    ```
 
 2. Update the `.env` file with your credentials:
-   ```
-   VITE_SUPABASE_URL=https://your-project-id.supabase.co
-   VITE_SUPABASE_ANON_KEY=eyJ...your-actual-key
-   ```
+    ```
+    VITE_SUPABASE_URL=https://your-project-id.supabase.co
+    VITE_SUPABASE_ANON_KEY=eyJ...your-actual-key
+    ```
 
 ## 4. Run Database Migrations
 
@@ -44,50 +45,55 @@
 ### Option B: Using Supabase CLI (Advanced)
 
 1. Install Supabase CLI:
-   ```bash
-   npm install -g supabase
-   ```
+
+    ```bash
+    npm install -g supabase
+    ```
 
 2. Login to Supabase:
-   ```bash
-   supabase login
-   ```
+
+    ```bash
+    supabase login
+    ```
 
 3. Link your project:
-   ```bash
-   supabase link --project-ref your-project-id
-   ```
+
+    ```bash
+    supabase link --project-ref your-project-id
+    ```
 
 4. Push migrations:
-   ```bash
-   supabase db push
-   ```
+    ```bash
+    supabase db push
+    ```
 
 ## 5. Verify Setup
 
 1. Go to **Table Editor** in your Supabase dashboard
 2. You should see three new tables:
-   - `expense_groups`
-   - `participants`
-   - `expenses`
+    - `expense_groups`
+    - `participants`
+    - `expenses`
 
 ## 6. Test Real-time Functionality
 
 1. Go to **Settings** → **API** → **Realtime**
 2. Enable real-time for all three tables:
-   - `expense_groups`
-   - `participants`
-   - `expenses`
+    - `expense_groups`
+    - `participants`
+    - `expenses`
 
 ## Database Schema
 
 ### expense_groups
+
 - `id` (UUID, Primary Key)
 - `title` (VARCHAR, Not Null)
 - `created_at` (TIMESTAMPTZ)
 - `is_active` (BOOLEAN)
 
 ### participants
+
 - `id` (UUID, Primary Key)
 - `name` (VARCHAR, Not Null)
 - `expense_group_id` (UUID, Foreign Key)
@@ -95,6 +101,7 @@
 - `joined_at` (TIMESTAMPTZ)
 
 ### expenses
+
 - `id` (UUID, Primary Key)
 - `description` (VARCHAR, Not Null)
 - `amount` (DECIMAL, Not Null, > 0)

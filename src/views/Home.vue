@@ -1,14 +1,14 @@
 <template>
-    <div class="min-h-screen flex items-center justify-center p-4">
+    <div class="flex min-h-screen items-center justify-center p-4">
         <div
-            class="glass rounded-2xl p-8 max-w-md w-full text-center animate-fade-in"
+            class="glass animate-fade-in w-full max-w-md rounded-2xl p-8 text-center"
         >
             <div class="mb-8">
                 <div
-                    class="w-20 h-20 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full mx-auto mb-4 flex items-center justify-center"
+                    class="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-r from-green-500 to-emerald-500"
                 >
                     <svg
-                        class="w-10 h-10 text-white"
+                        class="h-10 w-10 text-white"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -21,9 +21,7 @@
                         ></path>
                     </svg>
                 </div>
-                <h1 class="text-3xl font-bold text-white mb-2">
-                    Верни сотку
-                </h1>
+                <h1 class="mb-2 text-3xl font-bold text-white">Верни сотку</h1>
                 <p class="text-gray-300">
                     Создайте группу для учета совместных расходов
                 </p>
@@ -31,7 +29,10 @@
 
             <div class="space-y-4">
                 <div v-if="!groupLink" class="space-y-4">
-                    <form @submit.prevent="createNewExpenseGroup" class="space-y-4">
+                    <form
+                        @submit.prevent="createNewExpenseGroup"
+                        class="space-y-4"
+                    >
                         <input
                             v-model="groupTitle"
                             placeholder="Название группы (например: 'Поездка в Сочи')"
@@ -41,7 +42,7 @@
                         <button
                             type="submit"
                             :disabled="isCreating || !groupTitle.trim()"
-                            class="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                            class="btn-primary w-full disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             <span v-if="isCreating">Создание...</span>
                             <span v-else>Создать группу расходов</span>
@@ -51,10 +52,13 @@
 
                 <div
                     v-if="groupLink"
-                    class="glass rounded-lg p-4 animate-slide-up space-y-4"
+                    class="glass animate-slide-up space-y-4 rounded-lg p-4"
                 >
                     <div>
-                        <form @submit.prevent="joinExpenseGroup" class="space-y-3">
+                        <form
+                            @submit.prevent="joinExpenseGroup"
+                            class="space-y-3"
+                        >
                             <input
                                 v-model="userName"
                                 placeholder="Ваше имя"
@@ -64,30 +68,37 @@
                             <button
                                 type="submit"
                                 :disabled="isJoining || !userName.trim()"
-                                class="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                                class="btn-primary w-full disabled:cursor-not-allowed disabled:opacity-50"
                             >
-                                <span v-if="isJoining">⏳ Присоединение...</span>
+                                <span v-if="isJoining">
+                                    ⏳ Присоединение...
+                                </span>
                                 <span v-else>💰 Присоединиться</span>
                             </button>
                         </form>
-                        <p v-if="joinError" class="text-red-400 text-sm mt-2">{{ joinError }}</p>
+                        <p v-if="joinError" class="mt-2 text-sm text-red-400">
+                            {{ joinError }}
+                        </p>
                     </div>
-                    
+
                     <div class="border-t border-gray-600 pt-4">
-                        <p class="text-sm text-gray-300 mb-2">Ссылка для присоединения:</p>
+                        <p class="mb-2 text-sm text-gray-300">
+                            Ссылка для присоединения:
+                        </p>
                         <div
-                            class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2"
+                            class="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center"
                         >
                             <input
                                 :value="groupLink"
                                 readonly
-                                class="input-field w-full sm:flex-1 text-sm"
+                                class="input-field w-full text-sm sm:flex-1"
                             />
                             <button
                                 @click="copyLink"
-                                class="btn-secondary w-full sm:w-auto px-3 py-2"
+                                class="btn-secondary w-full px-3 py-2 sm:w-auto"
                                 :class="{
-                                    'bg-green-500/20 border-green-400/30': copied,
+                                    'border-green-400/30 bg-green-500/20':
+                                        copied,
                                 }"
                                 title="Копировать ссылку"
                             >
@@ -95,14 +106,14 @@
                                 <span v-else>📋 Копировать</span>
                             </button>
                         </div>
-                        <p class="text-xs text-gray-400 mt-2">
+                        <p class="mt-2 text-xs text-gray-400">
                             Поделитесь этой ссылкой с участниками группы
                         </p>
                     </div>
                 </div>
             </div>
 
-            <div class="mt-8 text-xs text-gray-400 space-y-1">
+            <div class="mt-8 space-y-1 text-xs text-gray-400">
                 <p>• Неограниченное количество участников</p>
                 <p>• Каждый видит только свои расходы</p>
                 <p>• Автоматический расчет балансов</p>
@@ -139,7 +150,7 @@ onMounted(async () => {
             router.push(`/expense/${groupParam}`)
             return
         }
-        
+
         // Проверяем, существует ли группа
         const groupExists = await expenseStore.expenseGroupExists(groupParam)
         if (groupExists) {
@@ -150,7 +161,7 @@ onMounted(async () => {
             // Группа не найдена
             joinError.value = 'Группа расходов не найдена или неактивна.'
         }
-        
+
         // Очищаем URL от query-параметра
         router.replace('/')
     }
@@ -161,11 +172,13 @@ async function createNewExpenseGroup() {
         alert('Please enter a title for your expense group')
         return
     }
-    
+
     isCreating.value = true
 
     try {
-        const newGroupId = await expenseStore.createExpenseGroup(groupTitle.value.trim())
+        const newGroupId = await expenseStore.createExpenseGroup(
+            groupTitle.value.trim()
+        )
         if (newGroupId) {
             groupId.value = newGroupId
             groupLink.value = getExpenseGroupUrl(newGroupId)
@@ -177,12 +190,6 @@ async function createNewExpenseGroup() {
 
 function getExpenseGroupUrl(id: string): string {
     return `${window.location.origin}/join/${id}`
-}
-
-function goToExpenseGroup() {
-    if (groupId.value) {
-        router.push(`/join/${groupId.value}`)
-    }
 }
 
 async function copyLink() {
@@ -199,26 +206,32 @@ async function copyLink() {
 
 async function joinExpenseGroup() {
     if (!userName.value.trim() || !groupId.value) return
-    
+
     isJoining.value = true
     joinError.value = ''
-    
+
     try {
-        const result = await expenseStore.joinExpenseGroup(groupId.value, userName.value.trim())
-        
+        const result = await expenseStore.joinExpenseGroup(
+            groupId.value,
+            userName.value.trim()
+        )
+
         if (result.success) {
             // Переходим к трекеру расходов
             await router.push(`/expense/${groupId.value}`)
         } else {
             switch (result.error) {
                 case 'GROUP_NOT_FOUND':
-                    joinError.value = 'Группа расходов не найдена или неактивна.'
+                    joinError.value =
+                        'Группа расходов не найдена или неактивна.'
                     break
                 case 'NAME_TAKEN':
-                    joinError.value = 'Имя уже занято в этой группе. Попробуйте другое имя.'
+                    joinError.value =
+                        'Имя уже занято в этой группе. Попробуйте другое имя.'
                     break
                 default:
-                    joinError.value = 'Произошла ошибка при присоединении к группе.'
+                    joinError.value =
+                        'Произошла ошибка при присоединении к группе.'
             }
         }
     } finally {

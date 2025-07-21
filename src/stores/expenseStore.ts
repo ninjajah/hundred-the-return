@@ -1,6 +1,7 @@
-import {defineStore} from 'pinia'
-import {ref} from 'vue'
-import {supabase} from '../lib/supabase'
+import { defineStore } from 'pinia'
+import { ref } from 'vue'
+import { supabase } from '../lib/supabase'
+import type { RealtimeChannel } from '@supabase/supabase-js'
 
 export interface ExpenseItem {
     id: string
@@ -48,16 +49,16 @@ export const useExpenseStore = defineStore('expenseStore', () => {
     const isLoading = ref(false)
 
     // Подписки на real-time обновления
-    let participantsSubscription: any = null
-    let expensesSubscription: any = null
+    let participantsSubscription: RealtimeChannel | null = null
+    let expensesSubscription: RealtimeChannel | null = null
 
     // Создание новой группы расходов
     async function createExpenseGroup(title: string): Promise<string | null> {
         isLoading.value = true
         try {
-            const {data, error} = await supabase
+            const { data, error } = await supabase
                 .from('expense_groups')
-                .insert({title, is_active: true})
+                .insert({ title, is_active: true })
                 .select()
                 .single()
 
@@ -74,7 +75,7 @@ export const useExpenseStore = defineStore('expenseStore', () => {
     // Проверка существования группы расходов
     async function expenseGroupExists(groupId: string): Promise<boolean> {
         try {
-            const {data, error} = await supabase
+            const { data, error } = await supabase
                 .from('expense_groups')
                 .select('id, is_active')
                 .eq('id', groupId)
@@ -92,7 +93,10 @@ export const useExpenseStore = defineStore('expenseStore', () => {
     async function joinExpenseGroup(
         groupId: string,
         userName: string
-    ): Promise<{success: boolean, error?: 'GROUP_NOT_FOUND' | 'NAME_TAKEN' | 'UNKNOWN'}> {
+    ): Promise<{
+        success: boolean
+        error?: 'GROUP_NOT_FOUND' | 'NAME_TAKEN' | 'UNKNOWN'
+    }> {
         isLoading.value = true
         try {
             // Проверяем существование группы
@@ -101,7 +105,7 @@ export const useExpenseStore = defineStore('expenseStore', () => {
             }
 
             // Проверяем уникальность имени в группе
-            const {data: existingUser} = await supabase
+            const { data: existingUser } = await supabase
                 .from('participants')
                 .select('id')
                 .eq('expense_group_id', groupId)
@@ -116,7 +120,7 @@ export const useExpenseStore = defineStore('expenseStore', () => {
             const sessionId = crypto.randomUUID()
 
             // Добавляем участника
-            const {data: participant, error} = await supabase
+            const { data: participant, error } = await supabase
                 .from('participants')
                 .insert({
                     expense_group_id: groupId,
@@ -172,7 +176,7 @@ export const useExpenseStore = defineStore('expenseStore', () => {
         if (!currentUser.value || !currentExpenseGroupId.value) return false
 
         try {
-            const {error} = await supabase.from('expenses').insert({
+            const { error } = await supabase.from('expenses').insert({
                 description,
                 amount,
                 participant_name: currentUser.value.name,
@@ -200,7 +204,7 @@ export const useExpenseStore = defineStore('expenseStore', () => {
         if (!currentUser.value || !currentExpenseGroupId.value) return false
 
         try {
-            const {error} = await supabase
+            const { error } = await supabase
                 .from('expenses')
                 .delete()
                 .eq('id', expenseId)
@@ -277,22 +281,22 @@ export const useExpenseStore = defineStore('expenseStore', () => {
         await Promise.all([
             loadParticipants(groupId),
             loadExpenses(groupId),
-            loadExpenseSummary(groupId)
+            loadExpenseSummary(groupId),
         ])
     }
 
     // Загрузка участников
     async function loadParticipants(groupId: string) {
         try {
-            const {data, error} = await supabase
+            const { data, error } = await supabase
                 .from('participants')
                 .select('*')
                 .eq('expense_group_id', groupId)
-                .order('joined_at', {ascending: true})
+                .order('joined_at', { ascending: true })
 
             if (error) throw error
 
-            participants.value = data.map((p) => ({
+            participants.value = data.map(p => ({
                 id: p.id,
                 name: p.name,
                 expense_group_id: p.expense_group_id,
@@ -307,15 +311,15 @@ export const useExpenseStore = defineStore('expenseStore', () => {
     // Загрузка расходов
     async function loadExpenses(groupId: string) {
         try {
-            const {data, error} = await supabase
+            const { data, error } = await supabase
                 .from('expenses')
                 .select('*')
                 .eq('expense_group_id', groupId)
-                .order('created_at', {ascending: false})
+                .order('created_at', { ascending: false })
 
             if (error) throw error
 
-            expenses.value = data.map((e) => ({
+            expenses.value = data.map(e => ({
                 id: e.id,
                 description: e.description,
                 amount: e.amount,
@@ -331,8 +335,12 @@ export const useExpenseStore = defineStore('expenseStore', () => {
     // Загрузка сводки расходов
     async function loadExpenseSummary(groupId: string) {
         try {
-            const {data, error} = await supabase
-                .rpc('calculate_expense_summary', {group_id: groupId})
+            const { data, error } = await supabase.rpc(
+                'calculate_expense_summary',
+                {
+                    group_id: groupId,
+                }
+            )
 
             if (error) throw error
 
@@ -357,7 +365,7 @@ export const useExpenseStore = defineStore('expenseStore', () => {
             }
 
             // Проверяем, что пользователь еще в группе
-            const {data: participant} = await supabase
+            const { data: participant } = await supabase
                 .from('participants')
                 .select('*')
                 .eq('id', session.userId)
@@ -404,41 +412,47 @@ export const useExpenseStore = defineStore('expenseStore', () => {
     // Расчет взаиморасчетов
     function calculateSettlements(summary: ExpenseSummary[]): Settlement[] {
         const settlements: Settlement[] = []
-        
+
         // Разделяем на должников и кредиторов
-        const debtors = summary.filter(s => s.balance < 0).map(s => ({
-            name: s.participant_name,
-            amount: Math.abs(s.balance)
-        })).sort((a, b) => b.amount - a.amount) // Сортируем по убыванию долга
-        
-        const creditors = summary.filter(s => s.balance > 0).map(s => ({
-            name: s.participant_name,
-            amount: s.balance
-        })).sort((a, b) => b.amount - a.amount) // Сортируем по убыванию кредита
-        
+        const debtors = summary
+            .filter(s => s.balance < 0)
+            .map(s => ({
+                name: s.participant_name,
+                amount: Math.abs(s.balance),
+            }))
+            .sort((a, b) => b.amount - a.amount) // Сортируем по убыванию долга
+
+        const creditors = summary
+            .filter(s => s.balance > 0)
+            .map(s => ({
+                name: s.participant_name,
+                amount: s.balance,
+            }))
+            .sort((a, b) => b.amount - a.amount) // Сортируем по убыванию кредита
+
         // Копируем массивы для работы
         const debtorsCopy = [...debtors]
         const creditorsCopy = [...creditors]
-        
+
         // Алгоритм распределения долгов
         while (debtorsCopy.length > 0 && creditorsCopy.length > 0) {
             const debtor = debtorsCopy[0]
             const creditor = creditorsCopy[0]
-            
+
             // Определяем сумму перевода
             const transferAmount = Math.min(debtor.amount, creditor.amount)
-            
+
             // Создаем запись о переводе
             settlements.push({
                 from: debtor.name,
                 to: creditor.name,
-                amount: Math.round(transferAmount * 100) / 100 // Округляем до 2 знаков
+                amount: Math.round(transferAmount * 100) / 100, // Округляем до 2 знаков
             })
-            
+
             // Уменьшаем долги
             debtor.amount -= transferAmount
             creditor.amount -= transferAmount
-            
+
             // Удаляем полностью рассчитанных участников
             if (debtor.amount < 0.01) {
                 debtorsCopy.shift()
@@ -447,7 +461,7 @@ export const useExpenseStore = defineStore('expenseStore', () => {
                 creditorsCopy.shift()
             }
         }
-        
+
         return settlements
     }
 
@@ -457,7 +471,10 @@ export const useExpenseStore = defineStore('expenseStore', () => {
     }
 
     function isUserInExpenseGroup(groupId: string): boolean {
-        return currentExpenseGroupId.value === groupId && currentUser.value !== null
+        return (
+            currentExpenseGroupId.value === groupId &&
+            currentUser.value !== null
+        )
     }
 
     return {

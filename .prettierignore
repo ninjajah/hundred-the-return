@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+.nuxt/
+.output/
+
+# Environment and config files
+.env*
+*.log
+
+# Coverage and test reports
+coverage/
+.nyc_output/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+
+# Package manager files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Generated files that shouldn't be formatted
+public/
+*.min.js
+*.min.css

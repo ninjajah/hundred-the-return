@@ -10,7 +10,11 @@
         "build-only": "vite build",
         "type-check": "vue-tsc --build",
         "lint": "eslint . --fix",
-        "format": "prettier --write ."
+        "lint:check": "eslint . --max-warnings 0",
+        "format": "prettier --write .",
+        "format:check": "prettier --check .",
+        "code-quality": "run-p lint:check format:check type-check",
+        "fix": "run-s format lint"
     },
     "dependencies": {
         "@supabase/supabase-js": "^2.51.0",

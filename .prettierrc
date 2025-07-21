@@ -2,5 +2,14 @@
     "trailingComma": "es5",
     "tabWidth": 4,
     "semi": false,
-    "singleQuote": true
+    "singleQuote": true,
+    "printWidth": 80,
+    "useTabs": false,
+    "quoteProps": "as-needed",
+    "bracketSpacing": true,
+    "arrowParens": "avoid",
+    "endOfLine": "lf",
+    "vueIndentScriptAndStyle": false,
+    "htmlWhitespaceSensitivity": "ignore",
+    "plugins": ["prettier-plugin-tailwindcss"]
 }
