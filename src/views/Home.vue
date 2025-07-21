@@ -48,45 +48,54 @@
 
                 <div
                     v-if="groupLink"
-                    class="glass rounded-lg p-4 animate-slide-up"
+                    class="glass rounded-lg p-4 animate-slide-up space-y-4"
                 >
-                    <p class="text-sm text-gray-300 mb-2">Ссылка для присоединения:</p>
-                    <div
-                        class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2"
-                    >
-                        <input
-                            :value="groupLink"
-                            readonly
-                            class="input-field w-full sm:flex-1 text-sm"
-                        />
-                        <button
-                            @click="goToExpenseGroup"
-                            class="btn-primary w-full sm:w-auto px-3 py-2"
-                            title="Присоединиться к группе"
+                    <div>
+                        <p class="text-sm text-gray-300 mb-2">Ссылка для присоединения:</p>
+                        <div
+                            class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2"
                         >
-                            <span class="sm:hidden">Присоединиться ➡️</span>
-                            <span class="hidden sm:inline">➡️</span>
-                        </button>
-                        <button
-                            @click="copyLink"
-                            class="btn-secondary w-full sm:w-auto px-3 py-2"
-                            :class="{
-                                'bg-green-500/20 border-green-400/30': copied,
-                            }"
-                            title="Копировать ссылку"
-                        >
-                            <span v-if="copied">✓</span>
-                            <span v-else>
-                                <span class="sm:hidden"
-                                    >Копировать ссылку📋</span
-                                >
-                                <span class="hidden sm:inline">📋</span>
-                            </span>
-                        </button>
+                            <input
+                                :value="groupLink"
+                                readonly
+                                class="input-field w-full sm:flex-1 text-sm"
+                            />
+                            <button
+                                @click="copyLink"
+                                class="btn-secondary w-full sm:w-auto px-3 py-2"
+                                :class="{
+                                    'bg-green-500/20 border-green-400/30': copied,
+                                }"
+                                title="Копировать ссылку"
+                            >
+                                <span v-if="copied">✓ Скопировано</span>
+                                <span v-else>📋 Копировать</span>
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-2">
+                            Поделитесь этой ссылкой с участниками группы
+                        </p>
                     </div>
-                    <p class="text-xs text-gray-400 mt-2">
-                        Поделитесь этой ссылкой с участниками группы
-                    </p>
+                    
+                    <div class="border-t border-gray-600 pt-4">
+                        <form @submit.prevent="joinExpenseGroup" class="space-y-3">
+                            <input
+                                v-model="userName"
+                                placeholder="Ваше имя"
+                                class="input-field w-full"
+                                required
+                            />
+                            <button
+                                type="submit"
+                                :disabled="isJoining || !userName.trim()"
+                                class="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <span v-if="isJoining">⏳ Присоединение...</span>
+                                <span v-else>💰 Присоединиться</span>
+                            </button>
+                        </form>
+                        <p v-if="joinError" class="text-red-400 text-sm mt-2">{{ joinError }}</p>
+                    </div>
                 </div>
             </div>
 
@@ -100,17 +109,49 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useExpenseStore } from '../stores/expenseStore'
 
 const router = useRouter()
+const route = useRoute()
 const expenseStore = useExpenseStore()
 const isCreating = ref(false)
 const groupLink = ref('')
 const groupId = ref('')
 const groupTitle = ref('')
 const copied = ref(false)
+const userName = ref('')
+const isJoining = ref(false)
+const joinError = ref('')
+
+// Проверяем, есть ли параметр группы в URL
+onMounted(async () => {
+    const groupParam = route.query.group as string
+    if (groupParam) {
+        // Проверяем, что пользователь уже не в этой группе
+        await expenseStore.restoreSession()
+        if (expenseStore.isUserInExpenseGroup(groupParam)) {
+            // Перенаправляем к трекеру
+            router.push(`/expense/${groupParam}`)
+            return
+        }
+        
+        // Проверяем, существует ли группа
+        const groupExists = await expenseStore.expenseGroupExists(groupParam)
+        if (groupExists) {
+            // Показываем форму присоединения
+            groupId.value = groupParam
+            groupLink.value = getExpenseGroupUrl(groupParam)
+        } else {
+            // Группа не найдена
+            joinError.value = 'Группа расходов не найдена или неактивна.'
+        }
+        
+        // Очищаем URL от query-параметра
+        router.replace('/')
+    }
+})
 
 async function createNewExpenseGroup() {
     if (!groupTitle.value.trim()) {
@@ -150,6 +191,35 @@ async function copyLink() {
         }, 2000)
     } catch (err) {
         console.error('Не удалось скопировать ссылку:', err)
+    }
+}
+
+async function joinExpenseGroup() {
+    if (!userName.value.trim() || !groupId.value) return
+    
+    isJoining.value = true
+    joinError.value = ''
+    
+    try {
+        const result = await expenseStore.joinExpenseGroup(groupId.value, userName.value.trim())
+        
+        if (result.success) {
+            // Переходим к трекеру расходов
+            await router.push(`/expense/${groupId.value}`)
+        } else {
+            switch (result.error) {
+                case 'GROUP_NOT_FOUND':
+                    joinError.value = 'Группа расходов не найдена или неактивна.'
+                    break
+                case 'NAME_TAKEN':
+                    joinError.value = 'Имя уже занято в этой группе. Попробуйте другое имя.'
+                    break
+                default:
+                    joinError.value = 'Произошла ошибка при присоединении к группе.'
+            }
+        }
+    } finally {
+        isJoining.value = false
     }
 }
 </script>

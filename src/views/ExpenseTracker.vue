@@ -1,10 +1,22 @@
 <template>
   <div class="min-h-screen p-4">
     <div class="max-w-4xl mx-auto">
-      <h1 class="text-4xl font-bold text-white text-center mb-8">
-        <span v-if="store.currentUser">Верни сотку, <span class="text-purple-300">{{ store.currentUser.name }}</span></span>
-        <span v-else>Верни сотку</span>
-      </h1>
+      <div class="text-center mb-8 relative">
+        <h1 class="text-4xl font-bold text-white mb-2">
+          <span v-if="store.currentUser">Верни сотку, <span class="text-purple-300">{{ store.currentUser.name }}</span></span>
+          <span v-else>Верни сотку</span>
+        </h1>
+        <button
+          v-if="store.currentExpenseGroupId"
+          @click="copyCurrentPageLink"
+          class="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
+          :class="{ 'text-green-400': linkCopied }"
+          title="Копировать ссылку на страницу"
+        >
+          <span v-if="linkCopied">✓ Скопировано</span>
+          <span v-else>🔗 Поделиться</span>
+        </button>
+      </div>
 
       <div v-if="store.currentUser" class="space-y-6">
 
@@ -12,29 +24,20 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <!-- Expenses Management -->
           <div class="glass rounded-2xl p-6">
-            <h2 class="text-2xl font-semibold text-white mb-6">
-              Расходы
-            </h2>
-
             <!-- Add Expense Form -->
+            <h2 class="text-2xl font-semibold text-white mb-6">
+              Добавить
+            </h2>
             <form @submit.prevent="addExpense" class="space-y-3 mb-6">
-              <!-- Amount and Submit Row -->
-              <div class="flex gap-3 items-stretch">
-                <div class="flex-1">
-                  <input
-                    v-model.number="newExpenseAmount"
-                    type="number"
-                    step="0.01"
-                    placeholder="Сумма (₽)"
-                    class="input-field w-full h-full"
-                    required
-                  />
-                </div>
-                <button type="submit" class="btn-primary input-field whitespace-nowrap px-4 py-2" :disabled="isAddingExpense">
-                  <span v-if="isAddingExpense">⏳ Добавление...</span>
-                  <span v-else>💰</span>
-                </button>
-              </div>
+              <!-- Amount Field -->
+              <input
+                v-model.number="newExpenseAmount"
+                type="number"
+                step="0.01"
+                placeholder="Сумма (₽)"
+                class="input-field w-full"
+                required
+              />
               
               <!-- Description Field -->
               <textarea
@@ -44,9 +47,18 @@
                 class="input-field w-full resize-none"
                 required
               ></textarea>
+              
+              <!-- Submit Button -->
+              <button type="submit" class="btn-primary input-field w-full px-4 py-2" :disabled="isAddingExpense">
+                <span v-if="isAddingExpense">⏳ Добавление...</span>
+                <span v-else>💰</span>
+              </button>
             </form>
 
             <!-- Expenses List -->
+            <h2 class="text-2xl font-semibold text-white mb-6">
+              Расходы
+            </h2>
             <div v-if="store.expenses.length === 0" class="text-gray-300 text-center py-8 border border-gray-600 rounded-lg">
               Пока нет расходов. Добавьте первый расход выше.
             </div>
@@ -98,7 +110,7 @@
                   <div class="text-white font-medium mb-2">{{ summary.participant_name }}</div>
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                     <div class="text-gray-300">
-                      Потратил: <span class="text-white">{{ summary.total_spent.toFixed(2) }} ₽</span>
+                      Потрачено: <span class="text-white">{{ summary.total_spent.toFixed(2) }} ₽</span>
                     </div>
                     <div class="text-gray-300">
                       Баланс: 
@@ -144,7 +156,13 @@
       </div>
 
       <div v-else class="glass rounded-2xl p-8 text-center">
-        <p class="text-xl text-white">
+        <div v-if="isLoading" class="flex flex-col items-center space-y-4">
+          <div class="animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent"></div>
+          <p class="text-xl text-white">
+            Идет загрузка...
+          </p>
+        </div>
+        <p v-else class="text-xl text-white">
           Пожалуйста, сначала присоединитесь к группе расходов.
         </p>
       </div>
@@ -165,6 +183,8 @@ const newExpenseDescription = ref('')
 const newExpenseAmount = ref(0)
 
 const isAddingExpense = ref(false)
+const linkCopied = ref(false)
+const isLoading = ref(true)
 
 // Computed property for settlements
 const settlements = computed(() => {
@@ -205,17 +225,37 @@ async function deleteExpense(expenseId: string) {
   }
 }
 
+async function copyCurrentPageLink() {
+  if (!store.currentExpenseGroupId) return
+  
+  try {
+    const joinUrl = `${window.location.origin}/join/${store.currentExpenseGroupId}`
+    await navigator.clipboard.writeText(joinUrl)
+    linkCopied.value = true
+    setTimeout(() => {
+      linkCopied.value = false
+    }, 2000)
+  } catch (err) {
+    console.error('Не удалось скопировать ссылку:', err)
+  }
+}
+
 onMounted(async () => {
   const groupId = route.params.id as string
 
-  // Try to restore session first
-  const sessionRestored = await store.restoreSession()
+  try {
+    // Try to restore session first
+    const sessionRestored = await store.restoreSession()
 
-  // Check if user is in the correct group
-  if (!sessionRestored || !store.currentUser || store.currentExpenseGroupId !== groupId) {
-    // Redirect to join page
-    router.push(`/join/${groupId}`)
-    return
+    // Check if user is in the correct group
+    if (!sessionRestored || !store.currentUser || store.currentExpenseGroupId !== groupId) {
+      // Redirect to join page
+      router.push(`/join/${groupId}`)
+      return
+    }
+  } finally {
+    // Отключаем состояние загрузки
+    isLoading.value = false
   }
 })
 </script>
