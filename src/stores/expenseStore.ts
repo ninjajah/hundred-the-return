@@ -1,7 +1,7 @@
-import { defineStore } from 'pinia'
-import { ref } from 'vue'
-import { supabase } from '../lib/supabase'
-import type { RealtimeChannel } from '@supabase/supabase-js'
+import {defineStore} from 'pinia'
+import {ref} from 'vue'
+import {supabase} from '../lib/supabase'
+import type {RealtimeChannel} from '@supabase/supabase-js'
 
 export interface ExpenseItem {
     id: string
@@ -35,9 +35,9 @@ export interface ExpenseSummary {
 }
 
 export interface Settlement {
-    from: string
-    to: string
-    amount: number
+    from: string // Кто платит
+    to: string // Кому платит
+    amount: number // Сколько платит
 }
 
 export const useExpenseStore = defineStore('expenseStore', () => {
@@ -48,37 +48,34 @@ export const useExpenseStore = defineStore('expenseStore', () => {
     const expenseSummary = ref<ExpenseSummary[]>([])
     const isLoading = ref(false)
 
+    // Подписки на real-time обновления
     let participantsSubscription: RealtimeChannel | null = null
     let expensesSubscription: RealtimeChannel | null = null
 
+    // Создание новой группы расходов
     async function createExpenseGroup(title: string): Promise<string | null> {
         isLoading.value = true
         try {
-            const { data, error } = await supabase
+            const {data, error} = await supabase
                 .from('expense_groups')
-                .insert({ title, is_active: true })
+                .insert({title, is_active: true})
                 .select()
                 .single()
 
-            if (error) {
-                console.error('Ошибка создания группы расходов:', error)
-                return null
-            }
+            if (error) throw error
             return data.id
         } catch (error) {
-            console.error(
-                'Неожиданная ошибка при создании группы расходов:',
-                error
-            )
+            console.error('Ошибка создания группы расходов:', error)
             return null
         } finally {
             isLoading.value = false
         }
     }
 
+    // Проверка существования группы расходов
     async function expenseGroupExists(groupId: string): Promise<boolean> {
         try {
-            const { data, error } = await supabase
+            const {data, error} = await supabase
                 .from('expense_groups')
                 .select('id, is_active')
                 .eq('id', groupId)
@@ -92,6 +89,7 @@ export const useExpenseStore = defineStore('expenseStore', () => {
         }
     }
 
+    // Присоединение к группе расходов
     async function joinExpenseGroup(
         groupId: string,
         userName: string
@@ -101,11 +99,13 @@ export const useExpenseStore = defineStore('expenseStore', () => {
     }> {
         isLoading.value = true
         try {
+            // Проверяем существование группы
             if (!(await expenseGroupExists(groupId))) {
-                return { success: false, error: 'GROUP_NOT_FOUND' }
+                return {success: false, error: 'GROUP_NOT_FOUND'}
             }
 
-            const { data: existingUser } = await supabase
+            // Проверяем уникальность имени в группе
+            const {data: existingUser} = await supabase
                 .from('participants')
                 .select('id')
                 .eq('expense_group_id', groupId)
@@ -113,12 +113,14 @@ export const useExpenseStore = defineStore('expenseStore', () => {
                 .single()
 
             if (existingUser) {
-                return { success: false, error: 'NAME_TAKEN' }
+                return {success: false, error: 'NAME_TAKEN'}
             }
 
-            const sessionId =             const sessionId = crypto.randomUUID()
+            // Создаем сессию
+            const sessionId = crypto.randomUUID()
 
-            const { data: participant, error } = await supabase
+            // Добавляем участника
+            const {data: participant, error} = await supabase
                 .from('participants')
                 .insert({
                     expense_group_id: groupId,
@@ -130,6 +132,7 @@ export const useExpenseStore = defineStore('expenseStore', () => {
 
             if (error) throw error
 
+            // Устанавливаем текущего пользователя
             currentUser.value = {
                 id: participant.id,
                 name: participant.name,
@@ -139,6 +142,7 @@ export const useExpenseStore = defineStore('expenseStore', () => {
             }
             currentExpenseGroupId.value = groupId
 
+            // Сохраняем сессию
             sessionStorage.setItem(
                 'expense_session',
                 JSON.stringify({
@@ -149,19 +153,22 @@ export const useExpenseStore = defineStore('expenseStore', () => {
                 })
             )
 
-            await subscribeToUpdates(groupI            await subscribeToUpdates(groupId)
+            // Подписываемся на обновления
+            await subscribeToUpdates(groupId)
 
+            // Загружаем данные
             await loadExpenseData(groupId)
 
-            return { success: true }
+            return {success: true}
         } catch (error) {
             console.error('Ошибка присоединения к группе:', error)
-            return { success: false, error: 'UNKNOWN' }
+            return {success: false, error: 'UNKNOWN'}
         } finally {
             isLoading.value = false
         }
     }
 
+    // Добавление расхода
     async function addExpense(
         description: string,
         amount: number
@@ -169,7 +176,7 @@ export const useExpenseStore = defineStore('expenseStore', () => {
         if (!currentUser.value || !currentExpenseGroupId.value) return false
 
         try {
-            const { error } = await supabase.from('expenses').insert({
+            const {error} = await supabase.from('expenses').insert({
                 description,
                 amount,
                 participant_name: currentUser.value.name,
@@ -178,9 +185,10 @@ export const useExpenseStore = defineStore('expenseStore', () => {
 
             if (error) throw error
 
-            await new Promise(resolve => setTimeout(resolve, 100))
+            // Небольшая задержка для обеспечения консистентности данных
             await new Promise(resolve => setTimeout(resolve, 100))
 
+            // Принудительно обновляем данные
             await loadExpenses(currentExpenseGroupId.value)
             await loadExpenseSummary(currentExpenseGroupId.value)
 
@@ -191,11 +199,12 @@ export const useExpenseStore = defineStore('expenseStore', () => {
         }
     }
 
+    // Удаление расхода
     async function deleteExpense(expenseId: string): Promise<boolean> {
         if (!currentUser.value || !currentExpenseGroupId.value) return false
 
         try {
-            const { error } = await supabase
+            const {error} = await supabase
                 .from('expenses')
                 .delete()
                 .eq('id', expenseId)
@@ -203,9 +212,10 @@ export const useExpenseStore = defineStore('expenseStore', () => {
 
             if (error) throw error
 
-            await new Promise(resolve => setTimeout(resolve, 100))
+            // Небольшая задержка для обеспечения консистентности данных
             await new Promise(resolve => setTimeout(resolve, 100))
 
+            // Принудительно обновляем данные
             await loadExpenses(currentExpenseGroupId.value)
             await loadExpenseSummary(currentExpenseGroupId.value)
 
@@ -216,7 +226,9 @@ export const useExpenseStore = defineStore('expenseStore', () => {
         }
     }
 
-    async function subscribeToUpdates(gr    async function subscribeToUpdates(groupId: string) {
+    // Подписка на real-time обновления
+    async function subscribeToUpdates(groupId: string) {
+        // Подписка на участников
         participantsSubscription = supabase
             .channel(`participants_${groupId}`)
             .on(
@@ -233,6 +245,7 @@ export const useExpenseStore = defineStore('expenseStore', () => {
             )
             .subscribe()
 
+        // Подписка на расходы
         expensesSubscription = supabase
             .channel(`expenses_${groupId}`)
             .on(
@@ -251,6 +264,7 @@ export const useExpenseStore = defineStore('expenseStore', () => {
             .subscribe()
     }
 
+    // Отписка от обновлений
     function unsubscribeFromUpdates() {
         if (participantsSubscription) {
             supabase.removeChannel(participantsSubscription)
@@ -262,6 +276,7 @@ export const useExpenseStore = defineStore('expenseStore', () => {
         }
     }
 
+    // Загрузка данных группы
     async function loadExpenseData(groupId: string) {
         await Promise.all([
             loadParticipants(groupId),
@@ -270,13 +285,14 @@ export const useExpenseStore = defineStore('expenseStore', () => {
         ])
     }
 
+    // Загрузка участников
     async function loadParticipants(groupId: string) {
         try {
-            const { data, error } = await supabase
+            const {data, error} = await supabase
                 .from('participants')
                 .select('*')
                 .eq('expense_group_id', groupId)
-                .order('joined_at', { ascending: true })
+                .order('joined_at', {ascending: true})
 
             if (error) throw error
 
@@ -292,13 +308,14 @@ export const useExpenseStore = defineStore('expenseStore', () => {
         }
     }
 
+    // Загрузка расходов
     async function loadExpenses(groupId: string) {
         try {
-            const { data, error } = await supabase
+            const {data, error} = await supabase
                 .from('expenses')
                 .select('*')
                 .eq('expense_group_id', groupId)
-                .order('created_at', { ascending: false })
+                .order('created_at', {ascending: false})
 
             if (error) throw error
 
@@ -315,9 +332,10 @@ export const useExpenseStore = defineStore('expenseStore', () => {
         }
     }
 
+    // Загрузка сводки расходов
     async function loadExpenseSummary(groupId: string) {
         try {
-            const { data, error } = await supabase.rpc(
+            const {data, error} = await supabase.rpc(
                 'calculate_expense_summary',
                 {
                     group_id: groupId,
@@ -332,6 +350,7 @@ export const useExpenseStore = defineStore('expenseStore', () => {
         }
     }
 
+    // Восстановление сессии
     async function restoreSession(): Promise<boolean> {
         try {
             const sessionData = sessionStorage.getItem('expense_session')
@@ -339,12 +358,14 @@ export const useExpenseStore = defineStore('expenseStore', () => {
 
             const session = JSON.parse(sessionData)
 
+            // Проверяем, что группа еще активна
             if (!(await expenseGroupExists(session.groupId))) {
                 sessionStorage.removeItem('expense_session')
                 return false
             }
 
-            const { data: participant } = await supabase
+            // Проверяем, что пользователь еще в группе
+            const {data: participant} = await supabase
                 .from('participants')
                 .select('*')
                 .eq('id', session.userId)
@@ -355,6 +376,7 @@ export const useExpenseStore = defineStore('expenseStore', () => {
                 return false
             }
 
+            // Восстанавливаем состояние
             currentUser.value = {
                 id: participant.id,
                 name: participant.name,
@@ -364,6 +386,7 @@ export const useExpenseStore = defineStore('expenseStore', () => {
             }
             currentExpenseGroupId.value = session.groupId
 
+            // Подписываемся на обновления и загружаем данные
             await subscribeToUpdates(session.groupId)
             await loadExpenseData(session.groupId)
 
@@ -375,6 +398,7 @@ export const useExpenseStore = defineStore('expenseStore', () => {
         }
     }
 
+    // Очистка сессии
     function clearSession() {
         sessionStorage.removeItem('expense_session')
         unsubscribeFromUpdates()
@@ -385,16 +409,18 @@ export const useExpenseStore = defineStore('expenseStore', () => {
         expenseSummary.value = []
     }
 
+    // Расчет взаиморасчетов
     function calculateSettlements(summary: ExpenseSummary[]): Settlement[] {
         const settlements: Settlement[] = []
 
+        // Разделяем на должников и кредиторов
         const debtors = summary
             .filter(s => s.balance < 0)
             .map(s => ({
                 name: s.participant_name,
                 amount: Math.abs(s.balance),
             }))
-            .sort((a, b) => b.amount - a.amount)
+            .sort((a, b) => b.amount - a.amount) // Сортируем по убыванию долга
 
         const creditors = summary
             .filter(s => s.balance > 0)
@@ -402,27 +428,32 @@ export const useExpenseStore = defineStore('expenseStore', () => {
                 name: s.participant_name,
                 amount: s.balance,
             }))
-            .sort((a, b) => b.amount - a.amount)
+            .sort((a, b) => b.amount - a.amount) // Сортируем по убыванию кредита
 
+        // Копируем массивы для работы
         const debtorsCopy = [...debtors]
         const creditorsCopy = [...creditors]
 
+        // Алгоритм распределения долгов
         while (debtorsCopy.length > 0 && creditorsCopy.length > 0) {
             const debtor = debtorsCopy[0]
             const creditor = creditorsCopy[0]
 
-            const transferAmount = Math.m            const transferAmount = Math.min(debtor.amount, creditor.amount)
+            // Определяем сумму перевода
+            const transferAmount = Math.min(debtor.amount, creditor.amount)
 
+            // Создаем запись о переводе
             settlements.push({
                 from: debtor.name,
                 to: creditor.name,
-                amount: Math.round(transferAmount * 100) / 100,
-            })
+                amount: Math.round(transferAmount * 100) / 100, // Округляем до 2 знаков
             })
 
+            // Уменьшаем долги
             debtor.amount -= transferAmount
             creditor.amount -= transferAmount
 
+            // Удаляем полностью рассчитанных участников
             if (debtor.amount < 0.01) {
                 debtorsCopy.shift()
             }
@@ -434,6 +465,7 @@ export const useExpenseStore = defineStore('expenseStore', () => {
         return settlements
     }
 
+    // Утилиты
     function getExpenseGroupUrl(groupId: string): string {
         return `${window.location.origin}/join/${groupId}`
     }
@@ -446,6 +478,7 @@ export const useExpenseStore = defineStore('expenseStore', () => {
     }
 
     return {
+        // State
         currentUser,
         currentExpenseGroupId,
         expenses,
@@ -453,6 +486,7 @@ export const useExpenseStore = defineStore('expenseStore', () => {
         expenseSummary,
         isLoading,
 
+        // Actions
         createExpenseGroup,
         expenseGroupExists,
         joinExpenseGroup,
@@ -461,6 +495,7 @@ export const useExpenseStore = defineStore('expenseStore', () => {
         restoreSession,
         clearSession,
 
+        // Utils
         getExpenseGroupUrl,
         isUserInExpenseGroup,
         calculateSettlements,
