@@ -1,7 +1,7 @@
-import {defineStore} from 'pinia'
-import {ref} from 'vue'
-import {supabase} from '../lib/supabase'
-import type {RealtimeChannel} from '@supabase/supabase-js'
+import { defineStore } from 'pinia'
+import { ref } from 'vue'
+import { supabase } from '../lib/supabase'
+import type { RealtimeChannel } from '@supabase/supabase-js'
 
 export interface ExpenseItem {
     id: string
@@ -56,9 +56,9 @@ export const useExpenseStore = defineStore('expenseStore', () => {
     async function createExpenseGroup(title: string): Promise<string | null> {
         isLoading.value = true
         try {
-            const {data, error} = await supabase
+            const { data, error } = await supabase
                 .from('expense_groups')
-                .insert({title, is_active: true})
+                .insert({ title, is_active: true })
                 .select()
                 .single()
 
@@ -75,7 +75,7 @@ export const useExpenseStore = defineStore('expenseStore', () => {
     // Проверка существования группы расходов
     async function expenseGroupExists(groupId: string): Promise<boolean> {
         try {
-            const {data, error} = await supabase
+            const { data, error } = await supabase
                 .from('expense_groups')
                 .select('id, is_active')
                 .eq('id', groupId)
@@ -101,11 +101,11 @@ export const useExpenseStore = defineStore('expenseStore', () => {
         try {
             // Проверяем существование группы
             if (!(await expenseGroupExists(groupId))) {
-                return {success: false, error: 'GROUP_NOT_FOUND'}
+                return { success: false, error: 'GROUP_NOT_FOUND' }
             }
 
             // Проверяем уникальность имени в группе
-            const {data: existingUser} = await supabase
+            const { data: existingUser } = await supabase
                 .from('participants')
                 .select('id')
                 .eq('expense_group_id', groupId)
@@ -113,14 +113,14 @@ export const useExpenseStore = defineStore('expenseStore', () => {
                 .single()
 
             if (existingUser) {
-                return {success: false, error: 'NAME_TAKEN'}
+                return { success: false, error: 'NAME_TAKEN' }
             }
 
             // Создаем сессию
             const sessionId = crypto.randomUUID()
 
             // Добавляем участника
-            const {data: participant, error} = await supabase
+            const { data: participant, error } = await supabase
                 .from('participants')
                 .insert({
                     expense_group_id: groupId,
@@ -159,10 +159,10 @@ export const useExpenseStore = defineStore('expenseStore', () => {
             // Загружаем данные
             await loadExpenseData(groupId)
 
-            return {success: true}
+            return { success: true }
         } catch (error) {
             console.error('Ошибка присоединения к группе:', error)
-            return {success: false, error: 'UNKNOWN'}
+            return { success: false, error: 'UNKNOWN' }
         } finally {
             isLoading.value = false
         }
@@ -176,7 +176,7 @@ export const useExpenseStore = defineStore('expenseStore', () => {
         if (!currentUser.value || !currentExpenseGroupId.value) return false
 
         try {
-            const {error} = await supabase.from('expenses').insert({
+            const { error } = await supabase.from('expenses').insert({
                 description,
                 amount,
                 participant_name: currentUser.value.name,
@@ -204,7 +204,7 @@ export const useExpenseStore = defineStore('expenseStore', () => {
         if (!currentUser.value || !currentExpenseGroupId.value) return false
 
         try {
-            const {error} = await supabase
+            const { error } = await supabase
                 .from('expenses')
                 .delete()
                 .eq('id', expenseId)
@@ -288,11 +288,11 @@ export const useExpenseStore = defineStore('expenseStore', () => {
     // Загрузка участников
     async function loadParticipants(groupId: string) {
         try {
-            const {data, error} = await supabase
+            const { data, error } = await supabase
                 .from('participants')
                 .select('*')
                 .eq('expense_group_id', groupId)
-                .order('joined_at', {ascending: true})
+                .order('joined_at', { ascending: true })
 
             if (error) throw error
 
@@ -311,11 +311,11 @@ export const useExpenseStore = defineStore('expenseStore', () => {
     // Загрузка расходов
     async function loadExpenses(groupId: string) {
         try {
-            const {data, error} = await supabase
+            const { data, error } = await supabase
                 .from('expenses')
                 .select('*')
                 .eq('expense_group_id', groupId)
-                .order('created_at', {ascending: false})
+                .order('created_at', { ascending: false })
 
             if (error) throw error
 
@@ -335,7 +335,7 @@ export const useExpenseStore = defineStore('expenseStore', () => {
     // Загрузка сводки расходов
     async function loadExpenseSummary(groupId: string) {
         try {
-            const {data, error} = await supabase.rpc(
+            const { data, error } = await supabase.rpc(
                 'calculate_expense_summary',
                 {
                     group_id: groupId,
@@ -365,7 +365,7 @@ export const useExpenseStore = defineStore('expenseStore', () => {
             }
 
             // Проверяем, что пользователь еще в группе
-            const {data: participant} = await supabase
+            const { data: participant } = await supabase
                 .from('participants')
                 .select('*')
                 .eq('id', session.userId)
