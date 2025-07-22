@@ -30,7 +30,9 @@
                     class="btn-secondary ml-4 flex-shrink-0 px-3 py-1 text-sm"
                     :disabled="deletingExpenseId === expense.id"
                 >
-                    <span v-if="deletingExpenseId === expense.id">Удаление...</span>
+                    <span v-if="deletingExpenseId === expense.id">
+                        Удаление...
+                    </span>
                     <span v-else>Удалить</span>
                 </button>
             </div>

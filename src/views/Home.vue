@@ -47,11 +47,17 @@
                         />
                         <button
                             type="submit"
-                            :disabled="isCreating || !groupTitle.trim() || !userName.trim()"
+                            :disabled="
+                                isCreating ||
+                                !groupTitle.trim() ||
+                                !userName.trim()
+                            "
                             class="btn-primary w-full disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             <span v-if="isCreating">Создание...</span>
-                            <span v-else>Создать группу и перейти к расчетам</span>
+                            <span v-else>
+                                Создать группу и перейти к расчетам
+                            </span>
                         </button>
                     </form>
                 </div>
@@ -204,13 +210,15 @@ async function createNewExpenseGroup() {
                 // Показываем форму присоединения, если что-то пошло не так
                 groupId.value = newGroupId
                 groupLink.value = getExpenseGroupUrl(newGroupId)
-                
+
                 switch (result.error) {
                     case 'NAME_TAKEN':
-                        joinError.value = 'Имя уже занято в этой группе. Попробуйте другое имя.'
+                        joinError.value =
+                            'Имя уже занято в этой группе. Попробуйте другое имя.'
                         break
                     default:
-                        joinError.value = 'Произошла ошибка при присоединении к группе.'
+                        joinError.value =
+                            'Произошла ошибка при присоединении к группе.'
                 }
             }
         }
