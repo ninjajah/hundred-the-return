@@ -13,7 +13,6 @@ const router = createRouter({
         {
             path: '/join/:id',
             redirect: to => {
-                // Перенаправляем на главную страницу с параметром группы
                 return { path: '/', query: { group: to.params.id } }
             },
         },

@@ -9,7 +9,6 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-// Типы для TypeScript
 export interface Database {
     public: {
         Tables: {

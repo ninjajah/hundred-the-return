@@ -21,7 +21,7 @@
 </template>
 
 <script setup lang="ts">
-import type { ExpenseParticipant } from '../../stores/expenseStore'
+import type { ExpenseParticipant } from '@/stores/expenseStore.ts'
 
 interface Props {
     currentUser?: ExpenseParticipant | null

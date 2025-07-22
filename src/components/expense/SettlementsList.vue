@@ -29,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Settlement } from '../../stores/expenseStore'
+import type { Settlement } from '@/stores/expenseStore.ts'
 
 interface Props {
     settlements: Settlement[]

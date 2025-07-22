@@ -151,30 +151,23 @@ const userName = ref('')
 const isJoining = ref(false)
 const joinError = ref('')
 
-// Проверяем, есть ли параметр группы в URL
 onMounted(async () => {
     const groupParam = route.query.group as string
     if (groupParam) {
-        // Проверяем, что пользователь уже не в этой группе
         await expenseStore.restoreSession()
         if (expenseStore.isUserInExpenseGroup(groupParam)) {
-            // Перенаправляем к трекеру
             router.push(`/expense/${groupParam}`)
             return
         }
 
-        // Проверяем, существует ли группа
         const groupExists = await expenseStore.expenseGroupExists(groupParam)
         if (groupExists) {
-            // Показываем форму присоединения
             groupId.value = groupParam
             groupLink.value = getExpenseGroupUrl(groupParam)
         } else {
-            // Группа не найдена
             joinError.value = 'Группа расходов не найдена или неактивна.'
         }
 
-        // Очищаем URL от query-параметра
         router.replace('/')
     }
 })
@@ -197,17 +190,14 @@ async function createNewExpenseGroup() {
             groupTitle.value.trim()
         )
         if (newGroupId) {
-            // Сразу присоединяемся к созданной группе
             const result = await expenseStore.joinExpenseGroup(
                 newGroupId,
                 userName.value.trim()
             )
 
             if (result.success) {
-                // Переходим к трекеру расходов
                 await router.push(`/expense/${newGroupId}`)
             } else {
-                // Показываем форму присоединения, если что-то пошло не так
                 groupId.value = newGroupId
                 groupLink.value = getExpenseGroupUrl(newGroupId)
 
@@ -256,7 +246,6 @@ async function joinExpenseGroup() {
         )
 
         if (result.success) {
-            // Переходим к трекеру расходов
             await router.push(`/expense/${groupId.value}`)
         } else {
             switch (result.error) {

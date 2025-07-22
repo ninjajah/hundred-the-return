@@ -49,7 +49,6 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useExpenseStore } from '../stores/expenseStore'
 
-// Components
 import {
     AppHeader,
     ExpenseManagement,
@@ -66,13 +65,11 @@ const linkCopied = ref(false)
 const isLoading = ref(true)
 const deletingExpenseId = ref<string | null>(null)
 
-// Computed property for settlements
 const settlements = computed(() => {
     if (store.expenseSummary.length === 0) return []
     return store.calculateSettlements(store.expenseSummary)
 })
 
-// Handle add expense from component
 async function handleAddExpense(data: { description: string; amount: number }) {
     if (!isAddingExpense.value) {
         isAddingExpense.value = true
@@ -90,7 +87,6 @@ async function handleAddExpense(data: { description: string; amount: number }) {
     }
 }
 
-// Handle delete expense
 async function deleteExpense(expenseId: string) {
     if (deletingExpenseId.value) return
 
@@ -124,21 +120,17 @@ onMounted(async () => {
     const groupId = route.params.id as string
 
     try {
-        // Try to restore session first
         const sessionRestored = await store.restoreSession()
 
-        // Check if user is in the correct group
         if (
             !sessionRestored ||
             !store.currentUser ||
             store.currentExpenseGroupId !== groupId
         ) {
-            // Redirect to join page
             router.push(`/join/${groupId}`)
             return
         }
     } finally {
-        // Отключаем состояние загрузки
         isLoading.value = false
     }
 })

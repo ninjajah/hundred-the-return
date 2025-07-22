@@ -73,7 +73,7 @@ import type {
     ExpenseSummary,
     Settlement,
     ExpenseItem,
-} from '../../stores/expenseStore'
+} from '@/stores/expenseStore.ts'
 import SettlementsList from './SettlementsList.vue'
 
 interface Props {

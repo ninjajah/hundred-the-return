@@ -57,7 +57,6 @@ function onSubmit() {
             amount: amount.value,
         })
 
-        // Reset form
         description.value = ''
         amount.value = 0
     }

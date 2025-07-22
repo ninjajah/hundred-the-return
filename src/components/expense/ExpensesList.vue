@@ -41,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-import type { ExpenseItem } from '../../stores/expenseStore'
+import type { ExpenseItem } from '@/stores/expenseStore.ts'
 
 interface Props {
     expenses: ExpenseItem[]

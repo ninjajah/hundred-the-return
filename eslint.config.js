@@ -6,7 +6,6 @@ import prettierConfig from 'eslint-config-prettier'
 import vueParser from 'vue-eslint-parser'
 
 export default [
-    // Base settings with ignores
     {
         ignores: [
             'node_modules/**',
@@ -17,7 +16,6 @@ export default [
             'coverage/**',
         ],
     },
-    // JavaScript and TypeScript files
     {
         files: ['**/*.{js,mjs,cjs,ts,mts,cts}'],
         languageOptions: {
@@ -38,7 +36,6 @@ export default [
             ...js.configs.recommended.rules,
             ...tseslint.configs.recommended.rules,
 
-            // TypeScript rules
             '@typescript-eslint/no-unused-vars': [
                 'error',
                 { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
@@ -46,14 +43,12 @@ export default [
             '@typescript-eslint/explicit-function-return-type': 'off',
             '@typescript-eslint/no-explicit-any': 'warn',
 
-            // General JavaScript/TypeScript rules
             'no-console': ['warn', { allow: ['warn', 'error'] }],
             'prefer-const': 'error',
             'no-var': 'error',
-            'no-unused-vars': 'off', // Use TypeScript version instead
+            'no-unused-vars': 'off',
         },
     },
-    // Vue files
     {
         files: ['**/*.vue'],
         languageOptions: {
@@ -78,16 +73,13 @@ export default [
             ...tseslint.configs.recommended.rules,
             ...pluginVue.configs['flat/essential'].rules,
 
-            // Vue-specific rules
             'vue/multi-word-component-names': 'off',
             'vue/no-reserved-component-names': 'error',
             'vue/require-default-prop': 'off',
             'vue/no-v-html': 'warn',
             'vue/component-name-in-template-casing': ['error', 'PascalCase'],
             'vue/custom-event-name-casing': 'error',
-            'vue/html-button-has-type': 'off', // Often not needed in Vue
-
-            // TypeScript rules for Vue files
+            'vue/html-button-has-type': 'off',
             '@typescript-eslint/no-unused-vars': [
                 'error',
                 { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
@@ -95,13 +87,11 @@ export default [
             '@typescript-eslint/explicit-function-return-type': 'off',
             '@typescript-eslint/no-explicit-any': 'warn',
 
-            // General rules for Vue files
             'no-console': ['warn', { allow: ['warn', 'error'] }],
             'prefer-const': 'error',
             'no-var': 'error',
-            'no-unused-vars': 'off', // Use TypeScript version instead
+            'no-unused-vars': 'off',
         },
     },
-    // Prettier config to disable conflicting rules
     prettierConfig,
 ]
