@@ -11,7 +11,6 @@
                 class="input-field w-full"
                 required
             />
-
             <!-- Description Field -->
             <textarea
                 v-model="description"
@@ -20,7 +19,6 @@
                 class="input-field w-full resize-none"
                 required
             ></textarea>
-
             <!-- Submit Button -->
             <button
                 type="submit"
@@ -28,7 +26,7 @@
                 :disabled="isSubmitting"
             >
                 <span v-if="isSubmitting">⏳ Добавление...</span>
-                <span v-else>💰</span>
+                <span v-else>💵</span>
             </button>
         </form>
     </div>

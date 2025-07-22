@@ -4,12 +4,20 @@ export default {
     theme: {
         extend: {
             colors: {
-                primary: {
-                    50: '#f0f9ff',
-                    500: '#3b82f6',
-                    600: '#2563eb',
-                    700: '#1d4ed8',
-                    900: '#1e3a8a',
+                gray: {
+                    900: '#0F0F0F', // Dark background
+                    800: '#1A1A1A', // Slightly lighter elements
+                    700: '#2A2A2A', // Borders
+                    600: '#3A3A3A', // Hover states
+                    500: '#555555',
+                    400: '#777777', // Placeholder text
+                    300: '#999999',
+                    200: '#BBBBBB',
+                    100: '#EEEEEE', // Primary text
+                },
+                yellow: {
+                    500: '#F0B90B', // Primary yellow (Bybit brand color)
+                    400: '#F8D33A', // Hover state
                 },
             },
             animation: {

@@ -85,7 +85,7 @@
                                 <span v-if="isJoining">
                                     ⏳ Присоединение...
                                 </span>
-                                <span v-else>💰 Присоединиться</span>
+                                <span v-else>💵 Присоединиться</span>
                             </button>
                         </form>
                         <p v-if="joinError" class="mt-2 text-sm text-red-400">

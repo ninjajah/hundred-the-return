@@ -3,7 +3,7 @@
         <h1 class="mb-2 text-4xl font-bold text-white">
             <span v-if="currentUser">
                 Верни сотку,
-                <span class="text-purple-300">{{ currentUser.name }}</span>
+                <span class="text-yellow-600">{{ currentUser.name }}</span>
             </span>
             <span v-else>Верни сотку</span>
         </h1>
