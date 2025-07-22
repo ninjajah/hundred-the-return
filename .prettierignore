@@ -32,3 +32,7 @@ pnpm-lock.yaml
 public/
 *.min.js
 *.min.css
+
+# Vercel configuration files (may be auto-generated)
+.vercel/
+vercel.json
