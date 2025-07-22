@@ -1,6 +1,6 @@
 <template>
     <div>
-        <h2 class="mb-6 text-2xl font-semibold text-white">Добавить</h2>
+        <h2 class="mb-6 text-2xl font-semibold text-white">Потрачено</h2>
         <form @submit.prevent="onSubmit" class="mb-6 space-y-3">
             <!-- Amount Field -->
             <input
@@ -15,7 +15,7 @@
             <!-- Description Field -->
             <textarea
                 v-model="description"
-                placeholder="Описание расхода..."
+                placeholder="За что"
                 rows="3"
                 class="input-field w-full resize-none"
                 required

@@ -8,7 +8,7 @@
         <ExpensesList
             :expenses="expenses"
             :current-user-name="currentUserName"
-            :is-deleting="isDeletingExpense"
+            :deleting-expense-id="deletingExpenseId"
             @deleteExpense="onDeleteExpense"
         />
     </div>
@@ -23,7 +23,7 @@ interface Props {
     expenses: ExpenseItem[]
     currentUserName?: string | null
     isAddingExpense?: boolean
-    isDeletingExpense?: boolean
+    deletingExpenseId?: string | null
 }
 
 interface Emits {

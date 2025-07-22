@@ -28,9 +28,9 @@
                     v-if="expense.participant_name === currentUserName"
                     @click="$emit('deleteExpense', expense.id)"
                     class="btn-secondary ml-4 flex-shrink-0 px-3 py-1 text-sm"
-                    :disabled="isDeleting"
+                    :disabled="deletingExpenseId === expense.id"
                 >
-                    <span v-if="isDeleting">Удаление...</span>
+                    <span v-if="deletingExpenseId === expense.id">Удаление...</span>
                     <span v-else>Удалить</span>
                 </button>
             </div>
@@ -44,7 +44,7 @@ import type { ExpenseItem } from '../../stores/expenseStore'
 interface Props {
     expenses: ExpenseItem[]
     currentUserName?: string | null
-    isDeleting?: boolean
+    deletingExpenseId?: string | null
 }
 
 interface Emits {

@@ -34,6 +34,12 @@
                         class="space-y-4"
                     >
                         <input
+                            v-model="userName"
+                            placeholder="Ваше имя"
+                            class="input-field w-full"
+                            required
+                        />
+                        <input
                             v-model="groupTitle"
                             placeholder="Название группы (например: 'Поездка в Сочи')"
                             class="input-field w-full"
@@ -41,11 +47,11 @@
                         />
                         <button
                             type="submit"
-                            :disabled="isCreating || !groupTitle.trim()"
+                            :disabled="isCreating || !groupTitle.trim() || !userName.trim()"
                             class="btn-primary w-full disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             <span v-if="isCreating">Создание...</span>
-                            <span v-else>Создать группу расходов</span>
+                            <span v-else>Создать группу и перейти к расчетам</span>
                         </button>
                     </form>
                 </div>
@@ -169,7 +175,12 @@ onMounted(async () => {
 
 async function createNewExpenseGroup() {
     if (!groupTitle.value.trim()) {
-        alert('Please enter a title for your expense group')
+        alert('Пожалуйста, введите название группы')
+        return
+    }
+
+    if (!userName.value.trim()) {
+        alert('Пожалуйста, введите ваше имя')
         return
     }
 
@@ -180,8 +191,28 @@ async function createNewExpenseGroup() {
             groupTitle.value.trim()
         )
         if (newGroupId) {
-            groupId.value = newGroupId
-            groupLink.value = getExpenseGroupUrl(newGroupId)
+            // Сразу присоединяемся к созданной группе
+            const result = await expenseStore.joinExpenseGroup(
+                newGroupId,
+                userName.value.trim()
+            )
+
+            if (result.success) {
+                // Переходим к трекеру расходов
+                await router.push(`/expense/${newGroupId}`)
+            } else {
+                // Показываем форму присоединения, если что-то пошло не так
+                groupId.value = newGroupId
+                groupLink.value = getExpenseGroupUrl(newGroupId)
+                
+                switch (result.error) {
+                    case 'NAME_TAKEN':
+                        joinError.value = 'Имя уже занято в этой группе. Попробуйте другое имя.'
+                        break
+                    default:
+                        joinError.value = 'Произошла ошибка при присоединении к группе.'
+                }
+            }
         }
     } finally {
         isCreating.value = false

@@ -16,7 +16,7 @@
                         :expenses="store.expenses"
                         :current-user-name="store.currentUser?.name"
                         :is-adding-expense="isAddingExpense"
-                        :is-deleting-expense="isDeletingExpense"
+                        :deleting-expense-id="deletingExpenseId"
                         @addExpense="handleAddExpense"
                         @deleteExpense="deleteExpense"
                     />
@@ -64,7 +64,7 @@ const store = useExpenseStore()
 const isAddingExpense = ref(false)
 const linkCopied = ref(false)
 const isLoading = ref(true)
-const isDeletingExpense = ref(false)
+const deletingExpenseId = ref<string | null>(null)
 
 // Computed property for settlements
 const settlements = computed(() => {
@@ -92,16 +92,16 @@ async function handleAddExpense(data: { description: string; amount: number }) {
 
 // Handle delete expense
 async function deleteExpense(expenseId: string) {
-    if (isDeletingExpense.value) return
+    if (deletingExpenseId.value) return
 
-    isDeletingExpense.value = true
+    deletingExpenseId.value = expenseId
     try {
         const success = await store.deleteExpense(expenseId)
         if (!success) {
             alert('Не удалось удалить расход')
         }
     } finally {
-        isDeletingExpense.value = false
+        deletingExpenseId.value = null
     }
 }
 
