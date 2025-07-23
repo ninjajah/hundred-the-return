@@ -104,8 +104,19 @@ async function deleteExpense(expenseId: string) {
 async function copyCurrentPageLink() {
     if (!store.currentExpenseGroupId) return
 
+    const joinUrl = `${window.location.origin}/join/${store.currentExpenseGroupId}`
+    const shareText = `Приглашаю в группу для расчётов: ${joinUrl}`
+
+    // Если доступен Telegram WebApp API, показываем Telegram диалог
+    // @ts-ignore
+    if (window.Telegram && Telegram.WebApp && Telegram.WebApp.share) {
+        // @ts-ignore
+        Telegram.WebApp.share(shareText)
+        return
+    }
+
+    // Старый вариант — просто копируем ссылку
     try {
-        const joinUrl = `${window.location.origin}/join/${store.currentExpenseGroupId}`
         await navigator.clipboard.writeText(joinUrl)
         linkCopied.value = true
         setTimeout(() => {
