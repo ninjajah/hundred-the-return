@@ -25,4 +25,19 @@ const router = createRouter({
     ],
 })
 
+// --- AUTO MINI APP DEEP LINK HANDLER START ---
+// Check Telegram Mini App start_param and auto redirect if present (only client side)
+if (typeof window !== 'undefined') {
+    // @ts-ignore
+    const tg = window.Telegram && window.Telegram.WebApp
+    // @ts-ignore
+    const startParam =
+        tg && tg.initDataUnsafe ? tg.initDataUnsafe.start_param : null
+    if (startParam) {
+        // redirect to mini app group route
+        router.replace(`/expense/${startParam}`)
+    }
+}
+// --- AUTO MINI APP DEEP LINK HANDLER END ---
+
 export default router
