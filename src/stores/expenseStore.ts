@@ -18,6 +18,10 @@ export interface ExpenseParticipant {
     expense_group_id: string
     session_id: string
     joined_at: Date
+    username?: string
+    first_name?: string
+    last_name?: string
+    photo_url?: string
 }
 
 export interface ExpenseGroup {
@@ -38,6 +42,18 @@ export interface Settlement {
     from: string // Кто платит
     to: string // Кому платит
     amount: number // Сколько платит
+}
+
+function getTelegramUser() {
+    // @ts-ignore
+    const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user
+    if (!tgUser) return null
+    return {
+        username: tgUser.username ?? undefined,
+        first_name: tgUser.first_name ?? undefined,
+        last_name: tgUser.last_name ?? undefined,
+        photo_url: tgUser.photo_url ?? undefined,
+    }
 }
 
 export const useExpenseStore = defineStore('expenseStore', () => {
@@ -133,12 +149,14 @@ export const useExpenseStore = defineStore('expenseStore', () => {
             if (error) throw error
 
             // Устанавливаем текущего пользователя
+            const tgUser = getTelegramUser()
             currentUser.value = {
                 id: participant.id,
                 name: participant.name,
                 expense_group_id: participant.expense_group_id,
                 session_id: participant.session_id,
                 joined_at: new Date(participant.joined_at),
+                ...(tgUser || {}),
             }
             currentExpenseGroupId.value = groupId
 
@@ -377,12 +395,14 @@ export const useExpenseStore = defineStore('expenseStore', () => {
             }
 
             // Восстанавливаем состояние
+            const tgUser = getTelegramUser()
             currentUser.value = {
                 id: participant.id,
                 name: participant.name,
                 expense_group_id: participant.expense_group_id,
                 session_id: participant.session_id,
                 joined_at: new Date(participant.joined_at),
+                ...(tgUser || {}),
             }
             currentExpenseGroupId.value = session.groupId
 

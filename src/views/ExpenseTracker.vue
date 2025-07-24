@@ -108,7 +108,7 @@ async function copyCurrentPageLink() {
     // Ссылка только для Mini App (бот из .env)
     const botUsername =
         import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'hundred_the_return_bot'
-    const miniAppUrl = `https://t.me/${botUsername}/app?startapp=${store.currentExpenseGroupId}`
+    const miniAppUrl = `https://t.me/${botUsername}/?startapp&start_param=${store.currentExpenseGroupId}`
     const shareText = `Приглашаю присоединиться к расчетам: ${miniAppUrl}`
 
     // Всегда копируем ссылку для Mini App в буфер обмена
